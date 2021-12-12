@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 from math import sqrt
+import random
 
 def cantorLambda(expr, start=0, length=1, ax=None, height=None):
     if height is None:
@@ -31,16 +32,29 @@ def sierpinskiLambda(expr, start=0, length=1, ax=None):
     elif isinstance(expr, str):
         ax.add_patch(Polygon([(start,0), (start+(length/2),(length/2)*sqrt(3)), (start+length, 0),], facecolor=expr)) 
 
-def fractalLambdaPlot(expr, start=0, length=1, plotFunc=sierpinskiLambda):
+def rulerLambda(expr, start=0, length=1, ax=None):
+    if isinstance(expr, list):
+        if expr[0] == 'lambda':
+            ax.add_patch(Polygon([(start+(length*7/15),length/4), (start+(length*7/15),-length/4), (start+(length*8/15),-length/4), (start+(length*8/15),length/4),], facecolor='k'))
+            rulerLambda(expr[1], start=start, length=length*7/15, ax=ax)
+            rulerLambda(expr[2], start=start+length*8/15, length=length*7/15, ax=ax)
+        elif expr[0] == 'apply':
+            ax.add_patch(Polygon([(start+(length*7/15),length/4), (start+(length*7/15),-length/4), (start+(length*8/15),-length/4), (start+(length*8/15),length/4),], facecolor='tab:gray'))
+            rulerLambda(expr[1], start=start, length=length*7/15, ax=ax)
+            rulerLambda(expr[2], start=start+length*8/15, length=length*7/15, ax=ax)
+    elif isinstance(expr, str):
+        ax.add_patch(Polygon([(start,length/9), (start,-length/9), (start+length, -length/9), (start+length, length/9)], facecolor=expr))   
+
+def fractalLambdaPlot(expr, plotFunc=sierpinskiLambda):
     _, ax=plt.subplots()
-    plotFunc(expr=expr, start=start, length=length, ax=ax)
+    plotFunc(expr=alphafy(expr), ax=ax)
     plt.axis('equal')
     plt.show()
 
 def oneBetaReduction(expr):
     if isinstance(expr, list):
-        if expr[0] == 'apply' and expr[1][0] == 'lambda':
-            return deepSubstitute(expr[1][1], expr[1][2], expr[2])
+        if expr[0] == 'apply' and isinstance(expr[1], list) and expr[1][0] == 'lambda':
+            return deepSubstitute(expr[1][1], expr[1][2], expr[2], uniform=False)
         betaReduceFirst = [expr[0], oneBetaReduction(expr[1]), expr[2]]
         if betaReduceFirst != expr:
             return betaReduceFirst
@@ -49,30 +63,61 @@ def oneBetaReduction(expr):
             return betaReduceSecond
     return expr
 
-def deepSubstitute(old, expr, new):
+def deepSubstitute(old, expr, new, uniform=True):
     if isinstance(expr, str) and expr == old:
         return new
     elif isinstance(expr, list):
         out = expr.copy()
         for i in range(len(expr)):
             if isinstance(expr[i], str) and expr[i] == old:
-                out[i] = new
+                if uniform:
+                    out[i] = new
+                else:
+                    out[i] = alphafy(new)
             if isinstance(expr[i], list):
                 out[i] = deepSubstitute(old, out[i], new)
         return out
 
-def visualBetaReduction(expr, start=0, length=1, plotFunc=sierpinskiLambda, depthLimit = 10):
-    current = expr.copy()
+def alphafy(expr):
+    if isinstance(expr, list):
+        out = expr.copy()
+        if out[0] == 'lambda':
+            out = deepSubstitute(out[1], out, "#%06x" % random.randint(0, 0xFFFFFF))
+        out[1] = alphafy(out[1])
+        out[2] = alphafy(out[2])
+        return out
+    return expr
+
+def visualBetaReduction(expr, plotFunc=sierpinskiLambda, depthLimit = 10):
+    current = alphafy(expr.copy())
     depth = 0
     while depth < depthLimit:
+        print(current)
+        _, ax=plt.subplots()
+        plotFunc(expr=current, ax=ax)
+        plt.axis('equal')
+        plt.show()
         if current == oneBetaReduction(current):
             break
-        print(current)
-        fractalLambdaPlot(expr=current, start=start, length=length, plotFunc=plotFunc)
         current = oneBetaReduction(current)    
         depth += 1    
 
-visualBetaReduction(['apply', ['lambda', 'b', ['apply', 'b', ['apply', 'b', 'b']]], ['lambda', 'b', ['apply', 'b', ['apply', 'b', 'b']]]], plotFunc=cantorLambda)
+#fractalLambdaPlot(['lambda', 'x', 'x'], plotFunc=cantorLambda) # \x.x
+#fractalLambdaPlot(['lambda', 'x', ['lambda', 'y', 'x']], plotFunc=sierpinskiLambda) # \x.\y.x
+#fractalLambdaPlot(['lambda', 'x', ['lambda', 'y', 'y']], plotFunc=rulerLambda) # \x.\y.y
+#fractalLambdaPlot(['lambda', 'x', ['lambda', 'y', ['lambda', 'w', ['apply', ['apply', 'x', 'w'], 'y']]]], plotFunc=cantorLambda) # \x.\y.\z.((xz)y)
+#fractalLambdaPlot(['lambda', 'x', ['lambda', 'x', 'x']], plotFunc=sierpinskiLambda) # \x.\x.x
+#fractalLambdaPlot(['lambda', 'x', ['apply', ['lambda', 'y', ['apply', 'x', ['apply', 'y', 'y']]], ['lambda', 'y', ['apply', 'x', ['apply', 'y', 'y']]]]], plotFunc=rulerLambda) # Y combinator
 
-#todo: legend
-#todo: automatic colors
+#visualBetaReduction(['apply', ['lambda', 'x', ['lambda', 'y', 'x']], ['lambda', 'x', 'x']], plotFunc=cantorLambda) # evaluate (\x.\y.x)(\x.x)
+#visualBetaReduction(['apply', ['lambda', 'x', ['apply', 'x', 'x']], ['lambda', 'x', ['apply', 'x', 'x']]], plotFunc=sierpinskiLambda) # evaluate (\x.xx)(\x.xx) 
+
+#lambdaTrue = ['lambda', 'x', ['lambda', 'y', 'x']]
+#lambdaFalse = ['lambda', 'x', ['lambda', 'y', 'y']]
+#lambdaNot = ['lambda', 'w', ['apply', ['apply', 'w', lambdaFalse], lambdaTrue]]
+#lambdaAnd = ['lambda', 'w', ['lambda', 'z', ['apply', ['apply', 'w', 'z'], lambdaFalse]]]
+#lambdaOr = ['lambda', 'w', ['lambda', 'z', ['apply', ['apply', 'w', lambdaTrue], 'z']]]
+#booleanExpr = ['apply', ['apply', lambdaOr, lambdaFalse], ['apply', ['apply', lambdaAnd, lambdaTrue], ['apply', lambdaNot, lambdaFalse]]] # translate ((Or False) ((And True) (Not False)))
+#visualBetaReduction(booleanExpr, plotFunc=rulerLambda, depthLimit=20) # evaluate
+
+#visualBetaReduction(['apply', ['lambda', 'y', ['apply', 'y', ['apply', 'y', 'y']]], ['lambda', 'y', ['apply', 'y', ['apply', 'y', 'y']]]], plotFunc=rulerLambda)
