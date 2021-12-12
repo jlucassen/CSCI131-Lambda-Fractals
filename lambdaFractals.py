@@ -45,12 +45,6 @@ def rulerLambda(expr, start=0, length=1, ax=None):
     elif isinstance(expr, str):
         ax.add_patch(Polygon([(start,length/9), (start,-length/9), (start+length, -length/9), (start+length, length/9)], facecolor=expr))   
 
-def fractalLambdaPlot(expr, plotFunc=sierpinskiLambda):
-    _, ax=plt.subplots()
-    plotFunc(expr=alphafy(expr), ax=ax)
-    plt.axis('equal')
-    plt.show()
-
 def oneBetaReduction(expr):
     if isinstance(expr, list):
         if expr[0] == 'apply' and isinstance(expr[1], list) and expr[1][0] == 'lambda':
@@ -88,7 +82,13 @@ def alphafy(expr):
         return out
     return expr
 
-def visualBetaReduction(expr, plotFunc=sierpinskiLambda, depthLimit = 10):
+def fractalLambdaPlot(expr, plotFunc=sierpinskiLambda):
+    _, ax=plt.subplots()
+    plotFunc(expr=alphafy(expr), ax=ax)
+    plt.axis('equal')
+    plt.show()
+
+def visualBetaReduction(expr, plotFunc=sierpinskiLambda, depthLimit = 5):
     current = alphafy(expr.copy())
     depth = 0
     while depth < depthLimit:
@@ -102,9 +102,9 @@ def visualBetaReduction(expr, plotFunc=sierpinskiLambda, depthLimit = 10):
         current = oneBetaReduction(current)    
         depth += 1    
 
-#fractalLambdaPlot(['lambda', 'x', 'x'], plotFunc=cantorLambda) # \x.x
-#fractalLambdaPlot(['lambda', 'x', ['lambda', 'y', 'x']], plotFunc=sierpinskiLambda) # \x.\y.x
-#fractalLambdaPlot(['lambda', 'x', ['lambda', 'y', 'y']], plotFunc=rulerLambda) # \x.\y.y
+fractalLambdaPlot(['lambda', 'x', 'x'], plotFunc=cantorLambda) # \x.x
+fractalLambdaPlot(['lambda', 'x', ['lambda', 'y', 'x']], plotFunc=sierpinskiLambda) # \x.\y.x
+fractalLambdaPlot(['lambda', 'x', ['lambda', 'y', 'y']], plotFunc=rulerLambda) # \x.\y.y
 #fractalLambdaPlot(['lambda', 'x', ['lambda', 'y', ['lambda', 'w', ['apply', ['apply', 'x', 'w'], 'y']]]], plotFunc=cantorLambda) # \x.\y.\z.((xz)y)
 #fractalLambdaPlot(['lambda', 'x', ['lambda', 'x', 'x']], plotFunc=sierpinskiLambda) # \x.\x.x
 #fractalLambdaPlot(['lambda', 'x', ['apply', ['lambda', 'y', ['apply', 'x', ['apply', 'y', 'y']]], ['lambda', 'y', ['apply', 'x', ['apply', 'y', 'y']]]]], plotFunc=rulerLambda) # Y combinator
@@ -112,12 +112,14 @@ def visualBetaReduction(expr, plotFunc=sierpinskiLambda, depthLimit = 10):
 #visualBetaReduction(['apply', ['lambda', 'x', ['lambda', 'y', 'x']], ['lambda', 'x', 'x']], plotFunc=cantorLambda) # evaluate (\x.\y.x)(\x.x)
 #visualBetaReduction(['apply', ['lambda', 'x', ['apply', 'x', 'x']], ['lambda', 'x', ['apply', 'x', 'x']]], plotFunc=sierpinskiLambda) # evaluate (\x.xx)(\x.xx) 
 
-#lambdaTrue = ['lambda', 'x', ['lambda', 'y', 'x']]
-#lambdaFalse = ['lambda', 'x', ['lambda', 'y', 'y']]
-#lambdaNot = ['lambda', 'w', ['apply', ['apply', 'w', lambdaFalse], lambdaTrue]]
-#lambdaAnd = ['lambda', 'w', ['lambda', 'z', ['apply', ['apply', 'w', 'z'], lambdaFalse]]]
-#lambdaOr = ['lambda', 'w', ['lambda', 'z', ['apply', ['apply', 'w', lambdaTrue], 'z']]]
-#booleanExpr = ['apply', ['apply', lambdaOr, lambdaFalse], ['apply', ['apply', lambdaAnd, lambdaTrue], ['apply', lambdaNot, lambdaFalse]]] # translate ((Or False) ((And True) (Not False)))
-#visualBetaReduction(booleanExpr, plotFunc=rulerLambda, depthLimit=20) # evaluate
+lambdaTrue = ['lambda', 'x', ['lambda', 'y', 'x']]
+lambdaFalse = ['lambda', 'x', ['lambda', 'y', 'y']]
+lambdaNot = ['lambda', 'w', ['apply', ['apply', 'w', lambdaFalse], lambdaTrue]]
+lambdaAnd = ['lambda', 'w', ['lambda', 'z', ['apply', ['apply', 'w', 'z'], lambdaFalse]]]
+lambdaOr = ['lambda', 'w', ['lambda', 'z', ['apply', ['apply', 'w', lambdaTrue], 'z']]]
+booleanExpr = ['apply', ['apply', lambdaOr, lambdaFalse], ['apply', ['apply', lambdaAnd, lambdaTrue], ['apply', lambdaNot, lambdaFalse]]] # translate ((Or False) ((And True) (Not False)))
+visualBetaReduction(booleanExpr, plotFunc=rulerLambda, depthLimit=20) # evaluate
 
-#visualBetaReduction(['apply', ['lambda', 'y', ['apply', 'y', ['apply', 'y', 'y']]], ['lambda', 'y', ['apply', 'y', ['apply', 'y', 'y']]]], plotFunc=rulerLambda)
+visualBetaReduction(['apply', ['lambda', 'y', ['apply', 'y', ['apply', 'y', 'y']]], ['lambda', 'y', ['apply', 'y', ['apply', 'y', 'y']]]], plotFunc=cantorLambda)
+visualBetaReduction(['apply', ['lambda', 'y', ['apply', 'y', ['apply', 'y', 'y']]], ['lambda', 'y', ['apply', 'y', ['apply', 'y', 'y']]]], plotFunc=sierpinskiLambda)
+visualBetaReduction(['apply', ['lambda', 'y', ['apply', 'y', ['apply', 'y', 'y']]], ['lambda', 'y', ['apply', 'y', ['apply', 'y', 'y']]]], plotFunc=rulerLambda)
