@@ -37,8 +37,42 @@ def fractalLambdaPlot(expr, start=0, length=1, plotFunc=sierpinskiLambda):
     plt.axis('equal')
     plt.show()
 
-fractalLambdaPlot(['apply', 'b', ['lambda', 'g', 'y']])
+def oneBetaReduction(expr):
+    if isinstance(expr, list):
+        if expr[0] == 'apply' and expr[1][0] == 'lambda':
+            return deepSubstitute(expr[1][1], expr[1][2], expr[2])
+        betaReduceFirst = [expr[0], oneBetaReduction(expr[1]), expr[2]]
+        if betaReduceFirst != expr:
+            return betaReduceFirst
+        betaReduceSecond = [expr[0], expr[1], oneBetaReduction(expr[2])]
+        if betaReduceSecond != expr:
+            return betaReduceSecond
+    return expr
 
-#todo: beta reduction
+def deepSubstitute(old, expr, new):
+    if isinstance(expr, str) and expr == old:
+        return new
+    elif isinstance(expr, list):
+        out = expr.copy()
+        for i in range(len(expr)):
+            if isinstance(expr[i], str) and expr[i] == old:
+                out[i] = new
+            if isinstance(expr[i], list):
+                out[i] = deepSubstitute(old, out[i], new)
+        return out
+
+def visualBetaReduction(expr, start=0, length=1, plotFunc=sierpinskiLambda, depthLimit = 10):
+    current = expr.copy()
+    depth = 0
+    while depth < depthLimit:
+        if current == oneBetaReduction(current):
+            break
+        print(current)
+        fractalLambdaPlot(expr=current, start=start, length=length, plotFunc=plotFunc)
+        current = oneBetaReduction(current)    
+        depth += 1    
+
+visualBetaReduction(['apply', ['lambda', 'b', ['apply', 'b', ['apply', 'b', 'b']]], ['lambda', 'b', ['apply', 'b', ['apply', 'b', 'b']]]], plotFunc=cantorLambda)
+
 #todo: legend
 #todo: automatic colors
